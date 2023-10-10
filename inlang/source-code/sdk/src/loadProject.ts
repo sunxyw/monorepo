@@ -6,36 +6,37 @@ import type {
 	Subscribable,
 } from "./api.js"
 import { type ImportFunction, resolveModules } from "./resolve-modules/index.js"
-import { TypeCompiler, ValueErrorType } from "@sinclair/typebox/compiler"
+import { TypeCompiler } from "@sinclair/typebox/compiler"
 import {
 	ProjectSettingsFileJSONSyntaxError,
 	ProjectSettingsFileNotFoundError,
 	ProjectSettingsInvalidError,
 	PluginLoadMessagesError,
 	PluginSaveMessagesError,
-	LoadProjectInvalidArgument,
 } from "./errors.js"
 import { createRoot, createSignal, createEffect } from "./reactivity/solid.js"
 import { createMessagesQuery } from "./createMessagesQuery.js"
 import { debounce } from "throttle-debounce"
 import { createMessageLintReportsQuery } from "./createMessageLintReportsQuery.js"
-import { ProjectSettings, Message, type NodeishFilesystemSubset } from "./versionedInterfaces.js"
+import {
+	ProjectSettings,
+	Message,
+	type NodeishFilesystemSubset,
+	MessageLintRule,
+} from "./versionedInterfaces.js"
 import { tryCatch, type Result } from "@inlang/result"
 import { migrateIfOutdated } from "@inlang/project-settings/migration"
-import { createNodeishFsWithAbsolutePaths } from "./createNodeishFsWithAbsolutePaths.js"
-import { normalizePath } from "@lix-js/fs"
-import { isAbsolutePath } from "./isAbsolutePath.js"
+import { Value } from "@sinclair/typebox/value"
+import { PluginSettingsInvalidError } from "./resolve-modules/plugins/errors.js"
+import { MessageLintRuleIsInvalidError } from "./resolve-modules/message-lint-rules/errors.js"
 
 const settingsCompiler = TypeCompiler.Compile(ProjectSettings)
 
 /**
  * Creates an inlang instance.
  *
- * @param settingsFilePath - Absolute path to the inlang settings file.
- * @param nodeishFs - Filesystem that implements the NodeishFilesystemSubset interface.
- * @param _import - Use `_import` to pass a custom import function for testing,
+ * - Use `_import` to pass a custom import function for testing,
  *   and supporting legacy resolvedModules such as CJS.
- * @param _capture - Use `_capture` to capture events for analytics.
  *
  */
 export const loadProject = async (args: {
@@ -44,32 +45,13 @@ export const loadProject = async (args: {
 	_import?: ImportFunction
 	_capture?: (id: string, props: Record<string, unknown>) => void
 }): Promise<InlangProject> => {
-	// -- validation --------------------------------------------------------
-	//! the only place where throwing is acceptable because the project
-	//! won't even be loaded. do not throw anywhere else. otherwise, apps
-	//! can't handle errors gracefully.
-	if (!isAbsolutePath(args.settingsFilePath)) {
-		throw new LoadProjectInvalidArgument(
-			`Expected an absolute path but received "${args.settingsFilePath}".`,
-			{ argument: "settingsFilePath" }
-		)
-	}
-
-	const settingsFilePath = normalizePath(args.settingsFilePath)
-
-	// -- load project ------------------------------------------------------
 	return await createRoot(async () => {
 		const [initialized, markInitAsComplete, markInitAsFailed] = createAwaitable()
-		const nodeishFs = createNodeishFsWithAbsolutePaths({
-			settingsFilePath,
-			nodeishFs: args.nodeishFs,
-		})
 
 		// -- settings ------------------------------------------------------------
-
 		const [settings, _setSettings] = createSignal<ProjectSettings>()
 		createEffect(() => {
-			loadSettings({ settingsFilePath, nodeishFs })
+			loadSettings({ settingsFilePath: args.settingsFilePath, nodeishFs: args.nodeishFs })
 				.then((settings) => {
 					setSettings(settings)
 					// rename settings to get a convenient access to the data in Posthog
@@ -83,7 +65,7 @@ export const loadProject = async (args: {
 		// TODO: create FS watcher and update settings on change
 
 		const writeSettingsToDisk = skipFirst((settings: ProjectSettings) =>
-			_writeSettingsToDisk({ nodeishFs, settings })
+			_writeSettingsToDisk({ nodeishFs: args.nodeishFs, settings })
 		)
 
 		const setSettings = (settings: ProjectSettings): Result<void, ProjectSettingsInvalidError> => {
@@ -112,14 +94,14 @@ export const loadProject = async (args: {
 		createEffect(() => {
 			const _settings = settings()
 			if (!_settings) return
-
-			resolveModules({ settings: _settings, nodeishFs, _import: args._import })
+			resolveModules({ settings: _settings, nodeishFs: args.nodeishFs, _import: args._import })
 				.then((resolvedModules) => {
+					validatedPluginSettings({ resolvedModules, settings: _settings })
 					setResolvedModules(resolvedModules)
+					// console.log(count"settings", _settings)
 				})
 				.catch((err) => markInitAsFailed(err))
 		})
-
 		// -- messages ----------------------------------------------------------
 
 		let settingsValue: ProjectSettings
@@ -271,7 +253,7 @@ const loadSettings = async (args: {
 	}
 	return parseSettings(json.data)
 }
-
+// TODO: why do we call this function 2 times
 const parseSettings = (settings: unknown) => {
 	const withMigration = migrateIfOutdated(settings as any)
 	if (settingsCompiler.Check(withMigration) === false) {
@@ -282,24 +264,6 @@ const parseSettings = (settings: unknown) => {
 			})
 		}
 	}
-
-	const { sourceLanguageTag, languageTags } = settings as ProjectSettings
-	if (!languageTags.includes(sourceLanguageTag)) {
-		throw new ProjectSettingsInvalidError({
-			errors: [
-				{
-					message: `The sourceLanguageTag "${sourceLanguageTag}" is not included in the languageTags "${languageTags.join(
-						'", "'
-					)}". Please add it to the languageTags.`,
-					type: ValueErrorType.String,
-					schema: ProjectSettings,
-					value: sourceLanguageTag,
-					path: "sourceLanguageTag",
-				},
-			],
-		})
-	}
-
 	return withMigration
 }
 
@@ -323,6 +287,47 @@ const _writeSettingsToDisk = async (args: {
 		throw writeSettingsError
 	}
 }
+
+export const validatedPluginSettings = (args: { resolvedModules: any; settings: any }) => {
+	const modules = [...args.resolvedModules.plugins, ...args.resolvedModules.messageLintRules]
+	const result: any = {
+		data: [],
+		errors: [],
+	}
+	for (const module of modules) {
+		if (module.id.includes("plugin")) {
+			const hasValidSettings = Value.Check(module.settingsSchema as any, args.settings[module.id])
+			if (hasValidSettings === false) {
+				const errors = [...Value.Errors(module.settingsSchema as any, args.settings[module.id])]
+				result.errors.push(
+					new PluginSettingsInvalidError({
+						id: module.id,
+						cause: JSON.stringify(errors),
+					})
+				)
+			}
+		} else if (module.id.includes("messageLintRule")) {
+			const hasValidSettings = Value.Check(MessageLintRule, module)
+			if (hasValidSettings === false) {
+				const errors = [...Value.Errors(MessageLintRule, module)]
+				result.error.push(
+					new MessageLintRuleIsInvalidError({
+						id: module.id,
+						errors,
+					})
+				)
+			}
+		}
+	}
+	if (result.errors != 0) {
+		throw result.errors
+	}
+}
+
+
+
+
+
 
 // ------------------------------------------------------------------------------------------------
 

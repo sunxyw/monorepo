@@ -9,10 +9,12 @@ import {
 	PluginHasInvalidIdError,
 	PluginHasInvalidSchemaError,
 	PluginUsesReservedNamespaceError,
+	PluginSettingsInvalidError,
 } from "./errors.js"
 import { deepmerge } from "deepmerge-ts"
 import { TypeCompiler } from "@sinclair/typebox/compiler"
 import { tryCatch } from "@inlang/result"
+import { Value } from "@sinclair/typebox/value"
 
 const whitelistedPlugins = [
 	"plugin.inlang.json",
@@ -21,7 +23,6 @@ const whitelistedPlugins = [
 ]
 // @ts-ignore - type mismatch error
 const PluginCompiler = TypeCompiler.Compile(Plugin)
-
 export const resolvePlugins: ResolvePluginsFunction = async (args) => {
 	const result: Awaited<ReturnType<ResolvePluginsFunction>> = {
 		data: {
@@ -34,7 +35,6 @@ export const resolvePlugins: ResolvePluginsFunction = async (args) => {
 
 	for (const plugin of args.plugins) {
 		const errors = [...PluginCompiler.Errors(plugin)]
-
 		/**
 		 * -------------- RESOLVE PLUGIN --------------
 		 */
@@ -92,7 +92,18 @@ export const resolvePlugins: ResolvePluginsFunction = async (args) => {
 				)
 			}
 		}
+		// --- VALIDATE PLUGIN SETTINGS
 
+		const hasValidSettings = Value.Check(plugin.settingsSchema as any, args.settings[plugin.id])
+		if (hasValidSettings === false) {
+			const errors = [...Value.Errors(plugin.settingsSchema as any, args.settings[plugin.id])]
+			result.errors.push(
+				new PluginSettingsInvalidError({
+					id: plugin.id,
+					cause: JSON.stringify(errors),
+				})
+			)
+		}
 		// -- CONTINUE IF ERRORS --
 		if (result.errors.length > 0) {
 			continue
@@ -137,6 +148,5 @@ export const resolvePlugins: ResolvePluginsFunction = async (args) => {
 	) {
 		result.errors.push(new PluginsDoNotProvideLoadOrSaveMessagesError())
 	}
-
 	return result
 }

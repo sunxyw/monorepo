@@ -1,0 +1,25 @@
+{
+	"name": "@inlang/search",
+	"type": "module",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"dev": "node --loader tsx ./src/main.ts",
+		"test": "tsc --noEmit && vitest run",
+		"lint": "eslint ./src --fix",
+		"format": "prettier ./src --write",
+		"clean": "rm -rf ./dist ./.turbo ./node_modules"
+	},
+	"dependencies": {
+		"@inlang/marketplace-registry": "*",
+		"algoliasearch": "4.20.0",
+		"express": "4.18.2",
+		"tsx": "3.12.7"
+	},
+	"devDependencies": {
+		"typescript": "5.2.2",
+		"@types/express": "^4.17.17",
+		"vitest": "0.34.3"
+	},
+	"license": "Apache-2.0"
+}

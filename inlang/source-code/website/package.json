@@ -69,6 +69,7 @@
 		"@inlang/detect-json-formatting": "*",
 		"@inlang/env-variables": "*",
 		"@inlang/markdown": "*",
+		"@inlang/search": "*",
 		"@inlang/marketplace-manifest": "*",
 		"@inlang/marketplace-registry": "*",
 		"@inlang/result": "*",

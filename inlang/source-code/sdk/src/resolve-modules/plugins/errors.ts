@@ -55,9 +55,9 @@ export class PluginsDoNotProvideLoadOrSaveMessagesError extends Error {
 	}
 }
 export class PluginSettingsInvalidError extends Error {
-	constructor(options: { id: Plugin["id"] }) {
+	constructor(options: { id: Plugin["id"]; cause: ErrorOptions["cause"] }) {
 		super(
-			`The plugin "${options.id}" returned an invalid schema. Please check the plugin configuration and ensure it adheres to the required schema format.`
+			`The plugin "${options.id}" returned an invalid schema. Please check the ${options.cause}.`
 		)
 		this.name = "PluginSettingsInvalidError"
 	}

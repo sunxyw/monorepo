@@ -41,7 +41,6 @@ export const loadProject = async (args: {
 		const [initialized, markInitAsComplete, markInitAsFailed] = createAwaitable()
 
 		// -- settings ------------------------------------------------------------
-
 		const [settings, _setSettings] = createSignal<ProjectSettings>()
 		createEffect(() => {
 			loadSettings({ settingsFilePath: args.settingsFilePath, nodeishFs: args.nodeishFs })
@@ -245,8 +244,8 @@ const loadSettings = async (args: {
 		})
 	}
 	return parseSettings(json.data)
-}
-
+}			
+// TODO: why do we call this function 2 times 
 const parseSettings = (settings: unknown) => {
 	const withMigration = migrateIfOutdated(settings as any)
 	if (settingsCompiler.Check(withMigration) === false) {

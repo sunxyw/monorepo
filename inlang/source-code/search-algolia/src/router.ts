@@ -11,10 +11,12 @@ router.get(
 	) => {
 		if (request.query.category) {
 			searchCategory(request.query.category).then((results) => {
+				// @ts-expect-error because it is an unknown type
 				response.send(results.hits)
 			})
 		} else if (request.query.term) {
 			searchRegistry(request.query.term).then((results) => {
+				// @ts-expect-error because it is an unknown type
 				response.send(results.hits)
 			})
 		}

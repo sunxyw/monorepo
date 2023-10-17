@@ -29,7 +29,7 @@ index
 		console.error(err)
 	})
 
-export async function searchCategory(category: string) {
+export async function searchCategory(category: string): Promise<ReturnType<typeof index.search>> {
 	index.setSettings({
 		searchableAttributes: ["keywords"],
 	})
@@ -37,7 +37,7 @@ export async function searchCategory(category: string) {
 	return data
 }
 
-export async function searchRegistry(query: string) {
+export async function searchRegistry(query: string): Promise<ReturnType<typeof index.search>> {
 	const data = await index.search(query)
 	return data
 }

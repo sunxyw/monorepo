@@ -1,53 +1,78 @@
-import algoliasearch, { type AlgoliaSearchOptions, type SearchClient } from "algoliasearch"
+import { create, insert, search } from "@orama/orama"
 import { registry } from "@inlang/marketplace-registry"
 import express from "express"
 
-const algolia = algoliasearch as unknown as (
-	appId: string,
-	apiKey: string,
-	options?: AlgoliaSearchOptions
-) => SearchClient
+interface DatabaseSchema {
+	icon: string
+	gallery: string[]
+	displayName: {
+		en: string
+	}
+	description: {
+		en: string
+	}
+	readme: {
+		en: string
+	}
+	keywords: string[]
+	publisherName: string
+	publisherIcon: string
+	license: string
+}
 
-const client = algolia("8FJ6M1RWYO", process.env.ALGOLIA_API_KEY)
-const index = client.initIndex("registry")
+const db = await create<DatabaseSchema>({
+	schema: {
+		icon: "string",
+		gallery: "string[]" as unknown as string[],
+		displayName: {
+			en: "string",
+		},
+		description: {
+			en: "string",
+		},
+		readme: {
+			en: "string",
+		},
+		keywords: "string[]" as unknown as string[],
+		publisherName: "string",
+		publisherIcon: "string",
+		license: "string",
+	},
+})
 
-const objects = await Promise.all(
+const indexedItems = await Promise.all(
 	[...registry.values()].map(async (value) => {
-		const { id, readme, ...rest } = value
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const { id, $schema, readme, ...rest } = value
 
-		const text = await fetch((readme as { en: string }).en).then((res) => res.text())
+		const text = { en: await fetch((readme as { en: string }).en).then((res) => res.text()) }
 
-		return { objectID: id, ...rest, readme: text }
+		return { ...rest, readme: text }
 	})
 )
 
-index
-	.saveObjects(objects)
-	.then(() => {
-		console.info("Successfully uploaded registry to Algolia index")
-	})
-	.catch((err: any) => {
-		console.error(err)
-	})
-
-const searchCategory = async (query: string) => {
-	const data = await index.search(query)
-	return data.hits
-}
+// @ts-ignore
+for (const item of indexedItems) await insert(db, item)
 
 const app = express()
 
-app.get("/", (_: any, response: { send: (arg0: string) => void }) => {
-	response.send("Hello world")
-})
+app.get(
+	"/api/search",
+	(
+		request: { query: { category?: string; term?: string } },
+		response: { send: (arg0: any) => void }
+	) => {
+		const category = request.query.category
+		const term = request.query.term
 
-app.get("/search", (request: { query: { q: string } }, response: { send: (arg0: any) => void }) => {
-	const query = request.query.q
-	searchCategory(query).then((results) => {
-		response.send(results)
-	})
-})
-
-app.listen(3000, () => {
-	console.info("Server is listening")
-})
+		if (category) {
+			search(db, { term: category, properties: ["keywords"] }).then((results) => {
+				response.send(results.hits)
+			})
+		} else if (term) {
+			search(db, { term }).then((results) => {
+				response.send(results.hits)
+			})
+		}
+	}
+)

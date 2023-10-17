@@ -1,6 +1,6 @@
-import { For, Show, type Accessor, createSignal, createEffect, Match, Switch } from "solid-js"
+import { For, Show, type Accessor, createSignal, createEffect, Match, Switch, onMount } from "solid-js"
 import { SearchIcon } from "#src/pages/editor/@host/@owner/@repository/components/SearchInput.jsx"
-import { Button } from "#src/pages/index/components/Button.jsx"
+// import { Button } from "#src/pages/index/components/Button.jsx"
 import { GetHelp } from "#src/components/GetHelp.jsx"
 import Check from "~icons/material-symbols/check"
 import Right from "~icons/material-symbols/chevron-right"
@@ -33,6 +33,12 @@ const filteredItems = (slider?: boolean) => {
 		selectedCategory() === "marketplace" || slider ? undefined : selectedCategory()
 	)
 }
+onMount(() => {
+	const urlParams = new URLSearchParams(window.location.search)
+	if (urlParams.get("search") !== "" && urlParams.get("search") !== undefined) {
+		setSearchValue(urlParams.get("search")?.replace(/%20/g, " ") || "")
+	}
+})
 
 const randomizedItems = () => filteredItems(true).reverse()
 
@@ -71,23 +77,6 @@ export default function Marketplace(props: {
 						</div>
 					</Show>
 				</Show>
-				<Show when={!props.minimal}>
-					<div class="w-full top-16 sticky bg-background/90 backdrop-blur-xl pb-4 pt-8 z-10 flex flex-col gap-5">
-						<Search
-							placeholder={"Search for apps, plugins, lint rules ..."}
-							textValue={searchValue}
-							setTextValue={setSearchValue}
-						/>
-						<div class="flex justify-between items-center">
-							<Tags />
-							<div class="max-sm:hidden">
-								<Button type="text" href="/documentation/publish-marketplace">
-									Build your own
-								</Button>
-							</div>
-						</div>
-					</div>
-				</Show>
 				<Switch>
 					<Match when={props.slider}>
 						<h3 class="font-semibold text-2xl mb-6">Items that might interest you</h3>
@@ -115,7 +104,7 @@ export default function Marketplace(props: {
 						</div>
 					</Match>
 					<Match when={!props.slider}>
-						<div class="mb-32 pt-10 grid xl:grid-cols-3 md:grid-cols-2 w-full gap-4 justify-normal items-stretch relative">
+						<div class="mb-32 grid xl:grid-cols-3 md:grid-cols-2 w-full gap-4 justify-normal items-stretch relative">
 							<Gallery />
 						</div>
 					</Match>
@@ -154,126 +143,126 @@ const Gallery = (props: { randomize?: boolean }) => {
 	)
 }
 
-interface SearchInputProps {
-	placeholder: string
-	textValue: Accessor<string>
-	setTextValue: (value: string) => void
-}
+// interface SearchInputProps {
+// 	placeholder: string
+// 	textValue: Accessor<string>
+// 	setTextValue: (value: string) => void
+// }
 
-const Search = (props: SearchInputProps) => {
-	createEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			if (e.metaKey && e.key === "f") {
-				e.preventDefault()
-				const input = document.querySelector("sl-input")
-				input?.focus()
-			}
-		}
-		const handleKeyUp = (e: KeyboardEvent) => {
-			if (e.key === "Escape") {
-				const input = document.querySelector("sl-input")
-				input?.blur()
-			}
-		}
-		document.addEventListener("keyup", handleKeyUp)
-		document.addEventListener("keydown", handleKeyDown)
-		return () => {
-			document.removeEventListener("keyup", handleKeyUp)
-			document.removeEventListener("keydown", handleKeyDown)
-		}
-	})
+// const Search = (props: SearchInputProps) => {
+// 	createEffect(() => {
+// 		const handleKeyDown = (e: KeyboardEvent) => {
+// 			if (e.metaKey && e.key === "f") {
+// 				e.preventDefault()
+// 				const input = document.querySelector("sl-input")
+// 				input?.focus()
+// 			}
+// 		}
+// 		const handleKeyUp = (e: KeyboardEvent) => {
+// 			if (e.key === "Escape") {
+// 				const input = document.querySelector("sl-input")
+// 				input?.blur()
+// 			}
+// 		}
+// 		document.addEventListener("keyup", handleKeyUp)
+// 		document.addEventListener("keydown", handleKeyDown)
+// 		return () => {
+// 			document.removeEventListener("keyup", handleKeyUp)
+// 			document.removeEventListener("keydown", handleKeyDown)
+// 		}
+// 	})
 
-	return (
-		<div>
-			<sl-input
-				style={{
-					padding: "0px",
-					border: "none",
-					"--tw-ring-color": "#06B6D4",
-					"border-radius": "4px",
-				}}
-				prop:placeholder={props.placeholder}
-				prop:size={"medium"}
-				prop:value={props.textValue()}
-				onInput={(e) => {
-					props.setTextValue(e.currentTarget.value)
-				}}
-			>
-				<div slot={"suffix"}>
-					<SearchIcon />
-				</div>
-			</sl-input>
-		</div>
-	)
-}
+// 	return (
+// 		<div>
+// 			<sl-input
+// 				style={{
+// 					padding: "0px",
+// 					border: "none",
+// 					"--tw-ring-color": "#06B6D4",
+// 					"border-radius": "4px",
+// 				}}
+// 				prop:placeholder={props.placeholder}
+// 				prop:size={"medium"}
+// 				prop:value={props.textValue()}
+// 				onInput={(e) => {
+// 					props.setTextValue(e.currentTarget.value)
+// 				}}
+// 			>
+// 				<div slot={"suffix"}>
+// 					<SearchIcon />
+// 				</div>
+// 			</sl-input>
+// 		</div>
+// 	)
+// }
 
-const Tags = () => {
-	function selectTag(tag: SubCategory) {
-		if (selectedSubCategories().includes(tag)) {
-			setSelectedSubCategories(selectedSubCategories().filter((t) => t !== tag))
-		} else {
-			setSelectedSubCategories([...selectedSubCategories(), tag])
-		}
-	}
+// const Tags = () => {
+// 	function selectTag(tag: SubCategory) {
+// 		if (selectedSubCategories().includes(tag)) {
+// 			setSelectedSubCategories(selectedSubCategories().filter((t) => t !== tag))
+// 		} else {
+// 			setSelectedSubCategories([...selectedSubCategories(), tag])
+// 		}
+// 	}
 
-	return (
-		<div class="flex gap-2">
-			<div
-				onClick={() => selectTag("app")}
-				class={
-					"gap-2 relative py-1.5 rounded-full cursor-pointer border border-solid text-sm capitalize hover:opacity-90 transition-all duration-100 flex items-center " +
-					(selectedSubCategories().includes("app")
-						? "bg-surface-800 text-background border-surface-800 pl-7 pr-3"
-						: "bg-background text-surface-600 border-surface-200 px-3 hover:border-surface-400")
-				}
-			>
-				<Show when={selectedSubCategories().includes("app")}>
-					<Check class="w-4 h-4 absolute left-2" />
-				</Show>
-				<p class="m-0">Apps</p>
-			</div>
-			<div
-				onClick={() => selectTag("library")}
-				class={
-					"gap-2 relative py-1.5 rounded-full cursor-pointer border border-solid text-sm capitalize hover:opacity-90 transition-all duration-100 flex items-center " +
-					(selectedSubCategories().includes("library")
-						? "bg-surface-800 text-background border-surface-800 pl-7 pr-3"
-						: "bg-background text-surface-600 border-surface-200 px-3 hover:border-surface-400")
-				}
-			>
-				<Show when={selectedSubCategories().includes("library")}>
-					<Check class="w-4 h-4 absolute left-2" />
-				</Show>
-				<p class="m-0">Libraries</p>
-			</div>
-			<div
-				onClick={() => selectTag("messageLintRule")}
-				class={
-					"gap-2 relative py-1.5 rounded-full cursor-pointer border border-solid text-sm capitalize hover:opacity-90 transition-all duration-100 flex items-center " +
-					(selectedSubCategories().includes("messageLintRule")
-						? "bg-surface-800 text-background border-surface-800 pl-7 pr-3"
-						: "bg-background text-surface-600 border-surface-200 px-3 hover:border-surface-400")
-				}
-			>
-				<Show when={selectedSubCategories().includes("messageLintRule")}>
-					<Check class="w-4 h-4 absolute left-2" />
-				</Show>
-				<p class="m-0">Lint Rules</p>
-			</div>
-			<div
-				onClick={() => selectTag("plugin")}
-				class={
-					"gap-2 relative py-1.5 rounded-full cursor-pointer border border-solid text-sm capitalize hover:opacity-90 transition-all duration-100 flex items-center " +
-					(selectedSubCategories().includes("plugin")
-						? "bg-surface-800 text-background border-surface-800 pl-7 pr-3"
-						: "bg-background text-surface-600 border-surface-200 px-3 hover:border-surface-400")
-				}
-			>
-				<Show when={selectedSubCategories().includes("plugin")}>
-					<Check class="w-4 h-4 absolute left-2" />
-				</Show>
-				<p class="m-0">Plugins</p>
-			</div>
-		</div>
-	)
-}
+// 	return (
+// 		<div class="flex gap-2">
+// 			<div
+// 				onClick={() => selectTag("app")}
+// 				class={
+// 					"gap-2 relative py-1.5 rounded-full cursor-pointer border border-solid text-sm capitalize hover:opacity-90 transition-all duration-100 flex items-center " +
+// 					(selectedSubCategories().includes("app")
+// 						? "bg-surface-800 text-background border-surface-800 pl-7 pr-3"
+// 						: "bg-background text-surface-600 border-surface-200 px-3 hover:border-surface-400")
+// 				}
+// 			>
+// 				<Show when={selectedSubCategories().includes("app")}>
+// 					<Check class="w-4 h-4 absolute left-2" />
+// 				</Show>
+// 				<p class="m-0">Apps</p>
+// 			</div>
+// 			<div
+// 				onClick={() => selectTag("library")}
+// 				class={
+// 					"gap-2 relative py-1.5 rounded-full cursor-pointer border border-solid text-sm capitalize hover:opacity-90 transition-all duration-100 flex items-center " +
+// 					(selectedSubCategories().includes("library")
+// 						? "bg-surface-800 text-background border-surface-800 pl-7 pr-3"
+// 						: "bg-background text-surface-600 border-surface-200 px-3 hover:border-surface-400")
+// 				}
+// 			>
+// 				<Show when={selectedSubCategories().includes("library")}>
+// 					<Check class="w-4 h-4 absolute left-2" />
+// 				</Show>
+// 				<p class="m-0">Libraries</p>
+// 			</div>
+// 			<div
+// 				onClick={() => selectTag("messageLintRule")}
+// 				class={
+// 					"gap-2 relative py-1.5 rounded-full cursor-pointer border border-solid text-sm capitalize hover:opacity-90 transition-all duration-100 flex items-center " +
+// 					(selectedSubCategories().includes("messageLintRule")
+// 						? "bg-surface-800 text-background border-surface-800 pl-7 pr-3"
+// 						: "bg-background text-surface-600 border-surface-200 px-3 hover:border-surface-400")
+// 				}
+// 			>
+// 				<Show when={selectedSubCategories().includes("messageLintRule")}>
+// 					<Check class="w-4 h-4 absolute left-2" />
+// 				</Show>
+// 				<p class="m-0">Lint Rules</p>
+// 			</div>
+// 			<div
+// 				onClick={() => selectTag("plugin")}
+// 				class={
+// 					"gap-2 relative py-1.5 rounded-full cursor-pointer border border-solid text-sm capitalize hover:opacity-90 transition-all duration-100 flex items-center " +
+// 					(selectedSubCategories().includes("plugin")
+// 						? "bg-surface-800 text-background border-surface-800 pl-7 pr-3"
+// 						: "bg-background text-surface-600 border-surface-200 px-3 hover:border-surface-400")
+// 				}
+// 			>
+// 				<Show when={selectedSubCategories().includes("plugin")}>
+// 					<Check class="w-4 h-4 absolute left-2" />
+// 				</Show>
+// 				<p class="m-0">Plugins</p>
+// 			</div>
+// 		</div>
+// 	)
+// }

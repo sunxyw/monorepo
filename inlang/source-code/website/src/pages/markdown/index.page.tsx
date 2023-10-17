@@ -5,8 +5,8 @@ import MarketplaceLayout from "#src/components/marketplace/MarketplaceLayout.jsx
 export function Page() {
 	return (
 		<>
-			<Title>Global Website</Title>
-			<Meta name="description" content="Let your website speak the language of your customers." />
+			<Title>Global Markdown</Title>
+			<Meta name="description" content="Translate your markdown files with ease." />
 			<Meta name="og:image" content="/images/inlang-marketplace-image.jpg" />
 			<div class="bg-surface-50">
 				<MarketplaceLayout>

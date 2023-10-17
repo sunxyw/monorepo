@@ -1,50 +1,26 @@
-import { LandingPageLayout as RootLayout } from "../Layout.jsx"
 import { Meta, Title } from "@solidjs/meta"
-import { createSignal } from "solid-js"
-import Hero from "./sections/01-hero/index.jsx"
-import Marketplace from "./sections/03-marketplace/index.jsx"
-import Lix from "./sections/02-lix/index.jsx"
-
-export type PageProps = {
-	markdown: string
-}
+import Marketplace from "#src/components/sections/marketplace/index.jsx"
+import Hero from "./custom_section/Hero.jsx"
+import MarketplaceLayout from "#src/components/marketplace/MarketplaceLayout.jsx"
 
 export function Page() {
-	const [darkmode, setDarkmode] = createSignal(true)
-	const [transparent, setTransparent] = createSignal(true)
-
-	if (typeof window !== "undefined") {
-		window.addEventListener("scroll", () => {
-			if (window.scrollY > 2500) {
-				setDarkmode(false)
-			} else {
-				setDarkmode(true)
-			}
-
-			if (window.scrollY > 50) {
-				setTransparent(false)
-			} else {
-				setTransparent(true)
-			}
-		})
-	}
-
 	return (
 		<>
-			<Title>Globalization infrastructure for software</Title>
+			<Title>inlang Marketplace</Title>
 			<Meta
 				name="description"
-				content="inlang's ecosystem makes adapting your application to different markets easy."
+				content="Find apps, plugins and lint rules for inlang's ecosystem."
 			/>
-			<Meta name="og:image" content="/images/inlang-social-image.jpg" />
-			<RootLayout landingpage darkmode={darkmode()} transparent={transparent()}>
-				<div>
+			<Meta name="og:image" content="/images/inlang-marketplace-image.jpg" />
+			<div class="bg-surface-50">
+				<MarketplaceLayout>
 					<Hero />
-					<Lix />
-					<Marketplace />
-					{/* <QualityChecks /> */}
-				</div>
-			</RootLayout>
+					<div class="pb-16 md:pb-20 min-h-screen relative">
+						<h2 class="text-2xl font-semibold pb-4 pt-8">All Products</h2>
+						<Marketplace />
+					</div>
+				</MarketplaceLayout>
+			</div>
 		</>
 	)
 }

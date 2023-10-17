@@ -73,6 +73,10 @@ export const Plugin = Type.Object(
 		}) as unknown as TTemplateLiteral<[TLiteral<`plugin.${string}.${string}`>]>,
 		displayName: Translatable(Type.String()),
 		description: Translatable(Type.String()),
+		// TODO write a comment it must be a JsonObject schema (currently this is not working assumtion wrong type in JsonObject)
+		// settingsSchema: Type.Optional(JSONObject),
+		// settingsSchema: Type.Optional(JSONTTEST),
+		settingsSchema: Type.Optional(Type.Any()),
 		loadMessages: Type.Optional(Type.Any()),
 		saveMessages: Type.Optional(Type.Any()),
 		/**

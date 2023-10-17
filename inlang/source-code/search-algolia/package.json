@@ -3,8 +3,16 @@
 	"type": "module",
 	"version": "0.0.0",
 	"private": true,
+	"files": [
+		"dist",
+		"src"
+	],
+	"exports": {
+		"./router": "./dist/router.js"
+	},
 	"scripts": {
-		"dev": "node --loader tsx ./src/main.ts",
+		"build": "tsc --build",
+		"dev": "tsc --watch",
 		"test": "tsc --noEmit && vitest run",
 		"lint": "eslint ./src --fix",
 		"format": "prettier ./src --write",

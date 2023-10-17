@@ -6,7 +6,7 @@ import Check from "~icons/material-symbols/check"
 import Right from "~icons/material-symbols/chevron-right"
 import Left from "~icons/material-symbols/chevron-left"
 import { SectionLayout } from "#src/pages/index/components/sectionLayout.jsx"
-import { algorithm } from "./algorithm.js"
+import { searchHandler } from "./searchHandler.js"
 import { currentPageContext } from "#src/renderer/state.js"
 // @ts-ignore
 import { createSlider } from "solid-slider"
@@ -26,21 +26,20 @@ const selectedCategory = () => {
 }
 const [selectedSubCategories, setSelectedSubCategories] = createSignal<SubCategory[]>([])
 
-const filteredItems = (slider?: boolean) => {
-	return algorithm(
-		selectedSubCategories(),
-		searchValue(),
-		selectedCategory() === "marketplace" || slider ? undefined : selectedCategory()
+const filteredItems = async () => {
+	return await searchHandler(
+		selectedSubCategories() as SubCategory[],
+		searchValue() as string,
+		selectedCategory() as Category
 	)
 }
+
 onMount(() => {
 	const urlParams = new URLSearchParams(window.location.search)
 	if (urlParams.get("search") !== "" && urlParams.get("search") !== undefined) {
 		setSearchValue(urlParams.get("search")?.replace(/%20/g, " ") || "")
 	}
 })
-
-const randomizedItems = () => filteredItems(true).reverse()
 
 export default function Marketplace(props: {
 	minimal?: boolean
@@ -51,7 +50,7 @@ export default function Marketplace(props: {
 	const [details, setDetails] = createSignal({})
 	const [slider, { next, prev }] = createSlider({
 		slides: {
-			number: filteredItems(true).length,
+			number: filteredItems().length,
 			perView: window ? (window.innerWidth > 768 ? 3 : 1) : 1,
 			spacing: 16,
 		},
@@ -83,7 +82,7 @@ export default function Marketplace(props: {
 						<div class="relative">
 							{/* @ts-ignore */}
 							<div use:slider class="cursor-grab active:cursor-grabbing">
-								<Gallery randomize />
+								<Gallery />
 							</div>
 							<button
 								// @ts-ignore
@@ -119,26 +118,32 @@ export default function Marketplace(props: {
 	)
 }
 
-const Gallery = (props: { randomize?: boolean }) => {
+const Gallery = () => {
+	const [items, setItems] = createSignal([])
+
+	Promise.resolve(filteredItems()).then((items) => {
+		if (items.length > 0) {
+			setItems(items)
+		}
+	})
 	return (
 		<>
-			<Show
-				when={filteredItems(props.randomize).length > 0}
-				fallback={<NoResultsCard category={selectedCategory()} />}
-			>
-				<For each={props.randomize ? randomizedItems() : filteredItems()}>
-					{(item) => {
-						const displayName =
-							typeof item.displayName === "object" ? item.displayName.en : item.displayName
+			<Switch>
+				<Match when={items().length > 0}>
+					<For each={items()}>
+						{(item) => {
+							const displayName =
+								typeof item.displayName === "object" ? item.displayName.en : item.displayName
 
-						return <Card item={item} displayName={displayName} />
-					}}
-				</For>
-				<CardBuildOwn />
-			</Show>
-			{/* <Match when={filteredItems(true).length === 0 && searchValue() !== ""}> */}
-			{/* <NoResultsCard /> */}
-			{/* </Match> */}
+							return <Card item={item} displayName={displayName} />
+						}}
+					</For>
+					<CardBuildOwn />
+				</Match>
+				<Match when={items().length === 0 && searchValue() !== ""}>
+					<NoResultsCard />
+				</Match>
+			</Switch>
 		</>
 	)
 }

@@ -10,7 +10,7 @@ const Hero = () => {
 			<div class="w-1/4 bg-background border border-surface-200 rounded-xl p-5">
 				<p class="pb-6 text-surface-400">Featured</p>
 				<ul class="flex flex-col gap-8">
-					<For each={featuredArray}>
+					{/* <For each={featuredArray}>
 						{(feature) => {
 							const m = registry.find((m) => m.id === feature)
 							return (
@@ -30,7 +30,7 @@ const Hero = () => {
 								</div>
 							)
 						}}
-					</For>
+					</For> */}
 				</ul>
 			</div>
 			<div class="flex-1 h-[600px] bg-background border border-surface-200 rounded-xl p-5">

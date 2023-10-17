@@ -8,7 +8,8 @@ import { router as websiteRouter } from "@inlang/website/router"
 import { router as telemetryRouter } from "@inlang/telemetry/router"
 import { router as rpcRouter } from "@inlang/rpc/router"
 import { router as badgeRouter } from "@inlang/badge/router"
-import { router as searchRouter } from "@inlang/search/router"
+import { router as searchOramaRouter } from "@inlang/search-orama/router"
+import { router as searchAlgoliaRouter } from "@inlang/search-algolia/router"
 import { MarketplaceManifest } from "@inlang/marketplace-manifest"
 import { ProjectSettings } from "@inlang/project-settings"
 
@@ -70,7 +71,8 @@ app.use(rpcRouter)
 
 app.use(badgeRouter)
 
-app.use(searchRouter)
+app.use(searchOramaRouter)
+app.use(searchAlgoliaRouter)
 
 // ! website comes last in the routes because it uses the wildcard `*` to catch all routes
 app.use(websiteRouter)

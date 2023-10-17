@@ -1,7 +1,7 @@
 import { type Static, Type, type TTemplateLiteral, type TLiteral } from "@sinclair/typebox"
 import type { NodeishFilesystem } from "@lix-js/fs"
 import type { Message } from "@inlang/message"
-import type { JSONObject } from "@inlang/json-types"
+import { JSONObject } from "@inlang/json-types"
 import type { CustomApiInlangIdeExtension } from "./customApis/app.inlang.ideExtension.js"
 import { Translatable } from "@inlang/translatable"
 import type { ExternalProjectSettings, ProjectSettings } from "@inlang/project-settings"
@@ -73,6 +73,12 @@ export const Plugin = Type.Object(
 		}) as unknown as TTemplateLiteral<[TLiteral<`plugin.${string}.${string}`>]>,
 		displayName: Translatable(Type.String()),
 		description: Translatable(Type.String()),
+		// TODO write a comment it must be a JsonObject schema (currently this is not working assumtion wrong type in JsonObject)
+		// settingsSchema: Type.Optional(JSONObject),
+		// settingsSchema: Type.Optional(JSONTTEST),
+
+		settingsSchema: Type.Optional(Type.Any()),
+
 		loadMessages: Type.Optional(Type.Any()),
 		saveMessages: Type.Optional(Type.Any()),
 		/**

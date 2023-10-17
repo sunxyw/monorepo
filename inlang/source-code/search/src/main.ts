@@ -1,10 +1,8 @@
 import { create, insert, search } from "@orama/orama"
 import { registry } from "@inlang/marketplace-registry"
-import express from "express"
-
 interface DatabaseSchema {
 	icon: string
-	gallery: string[]
+	gallery: "string[]"
 	displayName: {
 		en: string
 	}
@@ -14,7 +12,7 @@ interface DatabaseSchema {
 	readme: {
 		en: string
 	}
-	keywords: string[]
+	keywords: "string[]"
 	publisherName: string
 	publisherIcon: string
 	license: string
@@ -23,7 +21,7 @@ interface DatabaseSchema {
 const db = await create<DatabaseSchema>({
 	schema: {
 		icon: "string",
-		gallery: "string[]" as unknown as string[],
+		gallery: "string[]",
 		displayName: {
 			en: "string",
 		},
@@ -33,7 +31,7 @@ const db = await create<DatabaseSchema>({
 		readme: {
 			en: "string",
 		},
-		keywords: "string[]" as unknown as string[],
+		keywords: "string[]",
 		publisherName: "string",
 		publisherIcon: "string",
 		license: "string",
@@ -54,25 +52,10 @@ const indexedItems = await Promise.all(
 // @ts-ignore
 for (const item of indexedItems) await insert(db, item)
 
-const app = express()
+export function searchCategory(category: string) {
+	return search(db, { term: category, properties: ["keywords"] })
+}
 
-app.get(
-	"/api/search",
-	(
-		request: { query: { category?: string; term?: string } },
-		response: { send: (arg0: any) => void }
-	) => {
-		const category = request.query.category
-		const term = request.query.term
-
-		if (category) {
-			search(db, { term: category, properties: ["keywords"] }).then((results) => {
-				response.send(results.hits)
-			})
-		} else if (term) {
-			search(db, { term }).then((results) => {
-				response.send(results.hits)
-			})
-		}
-	}
-)
+export function searchRegistry(query: string) {
+	return search(db, { term: query })
+}

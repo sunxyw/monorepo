@@ -18,6 +18,7 @@
 		"@inlang/telemetry": "*",
 		"@inlang/website": "*",
 		"@inlang/project-settings": "*",
+		"@inlang/search": "*",
 		"@sentry/node": "^7.47.0",
 		"@sentry/tracing": "^7.47.0",
 		"compression": "^1.7.4",

@@ -11,6 +11,7 @@
 		"clean": "rm -rf ./dist ./.turbo ./node_modules"
 	},
 	"dependencies": {
+		"@inlang/marketplace-registry": "*",
 		"algoliasearch": "4.20.0",
 		"express": "4.18.2",
 		"tsx": "3.12.7"

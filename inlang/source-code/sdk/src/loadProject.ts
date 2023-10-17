@@ -19,12 +19,20 @@ import { createRoot, createSignal, createEffect } from "./reactivity/solid.js"
 import { createMessagesQuery } from "./createMessagesQuery.js"
 import { debounce } from "throttle-debounce"
 import { createMessageLintReportsQuery } from "./createMessageLintReportsQuery.js"
-import { ProjectSettings, Message, type NodeishFilesystemSubset } from "./versionedInterfaces.js"
+import {
+	ProjectSettings,
+	Message,
+	type NodeishFilesystemSubset,
+	MessageLintRule,
+} from "./versionedInterfaces.js"
 import { tryCatch, type Result } from "@inlang/result"
 import { migrateIfOutdated } from "@inlang/project-settings/migration"
 import { createNodeishFsWithAbsolutePaths } from "./createNodeishFsWithAbsolutePaths.js"
 import { normalizePath } from "@lix-js/fs"
 import { isAbsolutePath } from "./isAbsolutePath.js"
+import { Value } from "@sinclair/typebox/value"
+import { PluginSettingsInvalidError } from "./resolve-modules/plugins/errors.js"
+import { MessageLintRuleIsInvalidError } from "./resolve-modules/message-lint-rules/errors.js"
 
 const settingsCompiler = TypeCompiler.Compile(ProjectSettings)
 
@@ -114,6 +122,7 @@ export const loadProject = async (args: {
 
 			resolveModules({ settings: _settings, nodeishFs, _import: args._import })
 				.then((resolvedModules) => {
+					validatedSettings({ resolvedModules, settings: _settings })
 					setResolvedModules(resolvedModules)
 				})
 				.catch((err) => markInitAsFailed(err))
@@ -269,8 +278,8 @@ const loadSettings = async (args: {
 		})
 	}
 	return parseSettings(json.data)
-}			
-// TODO: why do we call this function 2 times 
+}
+// TODO: why do we call this function 2 times
 const parseSettings = (settings: unknown) => {
 	const withMigration = migrateIfOutdated(settings as any)
 	if (settingsCompiler.Check(withMigration) === false) {
@@ -322,6 +331,42 @@ const _writeSettingsToDisk = async (args: {
 		throw writeSettingsError
 	}
 }
+
+ const validatedSettings = (args: { resolvedModules: any; settings: any }) => {
+		const modules = [...args.resolvedModules.plugins, ...args.resolvedModules.messageLintRules]
+		const result: any = {
+			data: [],
+			errors: [],
+		}
+		for (const module of modules) {
+			if (module.id.includes("plugin")) {
+				const hasValidSettings = Value.Check(module.settingsSchema as any, args.settings[module.id])
+				if (hasValidSettings === false) {
+					const errors = [...Value.Errors(module.settingsSchema as any, args.settings[module.id])]
+					result.errors.push(
+						new PluginSettingsInvalidError({
+							id: module.id,
+							cause: JSON.stringify(errors),
+						})
+					)
+				}
+			} else if (module.id.includes("messageLintRule")) {
+				const hasValidSettings = Value.Check(MessageLintRule, module)
+				if (hasValidSettings === false) {
+					const errors = [...Value.Errors(MessageLintRule, module)]
+					result.error.push(
+						new MessageLintRuleIsInvalidError({
+							id: module.id,
+							errors,
+						})
+					)
+				}
+			}
+		}
+		if (result.errors != 0) {
+			throw result.errors
+		}
+ }
 
 // ------------------------------------------------------------------------------------------------
 

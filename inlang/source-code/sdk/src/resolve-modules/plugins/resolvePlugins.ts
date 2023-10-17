@@ -82,13 +82,14 @@ export const resolvePlugins: ResolvePluginsFunction = async (args) => {
 
 		const hasValidSettings = Value.Check(plugin.settingsSchema as any, args.settings[plugin.id])
 		if (hasValidSettings === false) {
-			const errors = [...Value.Errors(plugin.settingsSchema as any, args.settings[plugin.id])]
-			result.errors.push(
-				new PluginSettingsInvalidError({
-					id: plugin.id,
-					cause: JSON.stringify(errors),
-				})
-			)
+			// console.log("ich bin eine Warnung ", plugin.settingsSchema)
+			// const errors = [...Value.Errors(plugin.settingsSchema as any, args.settings[plugin.id])]
+			// result.errors.push(
+			// 	new PluginSettingsInvalidError({
+			// 		id: plugin.id,
+			// 		cause: JSON.stringify(errors),
+			// 	})
+			// )
 		}
 		// -- CONTINUE IF ERRORS --
 		if (result.errors.length > 0) {

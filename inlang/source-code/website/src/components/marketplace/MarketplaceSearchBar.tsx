@@ -12,7 +12,7 @@ const MarketplaceSearchBar = () => {
 
 	return (
 		<form
-			class="group flex justify-center gap-1 px-3 items-center border h-8 w-80 py-0.5 rounded-full transition-all duration-150 bg-background border-surface-200 focus-within:border-primary"
+			class="group flex justify-center gap-1 px-3 items-center border h-8 w-full py-0.5 rounded-full transition-all duration-150 bg-background border-surface-200 focus-within:border-primary"
 			onSubmit={() => handleSubmit()}
 		>
 			<input
@@ -22,9 +22,7 @@ const MarketplaceSearchBar = () => {
 				class="border-0 focus:ring-0 h-full w-full pl-0 text-sm"
 				value={searchParam ? searchParam.replace(/%20/g, " ") : ""}
 			/>
-			<button
-				type="submit"
-			>
+			<button type="submit">
 				<IconSearch class="ml-1.5 transition-color duration-150 group-focus-within:text-primary" />
 			</button>
 		</form>

@@ -11,7 +11,7 @@ const Hero = () => {
 			<div class="w-1/4">
 				<p class="pb-2 text-surface-500 text-sm">Featured</p>
 				<ul class="-ml-3">
-					<For each={featuredArray}>
+					{/* <For each={featuredArray}>
 						{(feature) => {
 							const m = registry.find((m) => m.id === feature)
 							return (

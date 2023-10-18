@@ -7,22 +7,39 @@ import { registry } from "@inlang/marketplace-registry"
 // 	searchValue: string,
 // 	selectedCategory?: string
 // ) => {
-// 	const searchResults = await fetch(
-// 		`http://localhost:3000/search-orama?category=${selectedCategory}`
-// 	)
-// 		.then((res) => res.json())
-// 		.then((data) => data)
+// 	if (searchValue === "") {
+// 		const searchResults = await fetch(
+// 			`http://localhost:3000/search-orama?category=${selectedCategory}`
+// 		)
+// 			.then((res) => res.json())
+// 			.then((data) => data)
 
-// 	const filteredItems = searchResults.map((result: Record<string, any>) => {
-// 		const item = result.document
+// 		const filteredItems = searchResults.map((result: Record<string, any>) => {
+// 			const item = result.document
 
-// 		item.id = item.slug
-// 		delete item.slug
+// 			item.id = item.slug
+// 			delete item.slug
 
-// 		return item as MarketplaceManifest
-// 	})
+// 			return item as MarketplaceManifest
+// 		})
 
-// 	return filteredItems
+// 		return filteredItems
+// 	} else {
+// 		const searchResults = await fetch(`http://localhost:3000/search-orama?term=${searchValue}`)
+// 			.then((res) => res.json())
+// 			.then((data) => data)
+
+// 		const filteredItems = searchResults.map((result: Record<string, any>) => {
+// 			const item = result.document
+
+// 			item.id = item.slug
+// 			delete item.slug
+
+// 			return item as MarketplaceManifest
+// 		})
+
+// 		return filteredItems
+// 	}
 // }
 
 export const searchHandler = async (
